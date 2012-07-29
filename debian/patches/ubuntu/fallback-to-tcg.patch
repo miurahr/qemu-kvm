@@ -1,0 +1,77 @@
+Description: If kvm can't be used, default to tcg.
+ qemu-kvm has changed its default behavior.  If no accel= option is
+ specified, then it only tries kvm.  If kvm is not supported, it fails.
+ Change that, until LTS, to support tcg (un-accelerated qemu).  After
+ LTS, we can drop this patch and require '-machine pc,accel=kvm:tcg'
+ for legacy behavior.
+Author: Serge Hallyn <serge.hallyn@ubuntu.com>
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/qemu-kvm/+bug/892050
+Forwarded: no
+
+Index: qemu-kvm-1.1~rc+dfsg/hw/pc_piix.c
+===================================================================
+--- qemu-kvm-1.1~rc+dfsg.orig/hw/pc_piix.c	2012-05-31 20:19:22.000000000 -0500
++++ qemu-kvm-1.1~rc+dfsg/hw/pc_piix.c	2012-06-16 08:38:52.192519901 -0500
+@@ -362,7 +362,7 @@
+     .init = pc_init_pci,
+     .max_cpus = 255,
+     .is_default = 1,
+-    .default_machine_opts = "accel=kvm,kernel_irqchip=on",
++    .default_machine_opts = "accel=kvm:tcg,kernel_irqchip=on",
+ };
+ 
+ #define PC_COMPAT_1_0 \
+@@ -438,7 +438,7 @@
+     .desc = "Standard PC",
+     .init = pc_init_pci,
+     .max_cpus = 255,
+-    .default_machine_opts = "accel=kvm,kernel_irqchip=on",
++    .default_machine_opts = "accel=kvm:tcg,kernel_irqchip=on",
+     .compat_props = (GlobalProperty[]) {
+         PC_COMPAT_0_14, 
+         {
+@@ -471,7 +471,7 @@
+     .desc = "Standard PC",
+     .init = pc_init_pci_no_kvmclock,
+     .max_cpus = 255,
+-    .default_machine_opts = "accel=kvm,kernel_irqchip=on",
++    .default_machine_opts = "accel=kvm:tcg,kernel_irqchip=on",
+     .compat_props = (GlobalProperty[]) {
+         PC_COMPAT_0_13,
+         {
+@@ -508,7 +508,7 @@
+     .desc = "Standard PC",
+     .init = pc_init_pci_no_kvmclock,
+     .max_cpus = 255,
+-    .default_machine_opts = "accel=kvm,kernel_irqchip=on",
++    .default_machine_opts = "accel=kvm:tcg,kernel_irqchip=on",
+     .compat_props = (GlobalProperty[]) {
+         PC_COMPAT_0_12,
+         {
+@@ -541,7 +541,7 @@
+     .desc = "Standard PC, qemu 0.11",
+     .init = pc_init_pci_no_kvmclock,
+     .max_cpus = 255,
+-    .default_machine_opts = "accel=kvm,kernel_irqchip=on",
++    .default_machine_opts = "accel=kvm:tcg,kernel_irqchip=on",
+     .compat_props = (GlobalProperty[]) {
+         PC_COMPAT_0_11,
+         {
+@@ -562,7 +562,7 @@
+     .desc = "Standard PC, qemu 0.10",
+     .init = pc_init_pci_no_kvmclock,
+     .max_cpus = 255,
+-    .default_machine_opts = "accel=kvm,kernel_irqchip=on",
++    .default_machine_opts = "accel=kvm:tcg,kernel_irqchip=on",
+     .compat_props = (GlobalProperty[]) {
+         PC_COMPAT_0_11,
+         {
+@@ -595,7 +595,7 @@
+     .desc = "ISA-only PC",
+     .init = pc_init_isa,
+     .max_cpus = 1,
+-    .default_machine_opts = "accel=kvm,kernel_irqchip=on",
++    .default_machine_opts = "accel=kvm:tcg,kernel_irqchip=on",
+     .compat_props = (GlobalProperty[]) {
+         {
+             .driver   = "pc-sysfw",

@@ -1,0 +1,41 @@
+From 6f82a5ea52302bab33287b0191538be6f9138637 Mon Sep 17 00:00:00 2001
+From: Jan Kiszka <jan.kiszka@siemens.com>
+Date: Mon, 2 Jul 2012 10:05:39 +0200
+Subject: [PATCH 2/2] qemu-kvm: virtio: Do not register mask notifiers without
+ in-kernel irqchip support
+
+We crash if we registers mask notifiers without backing in-kernel
+irqchip. This corresponds to the check in QEMU upstream after 1.1 now.
+
+Signed-off-by: Jan Kiszka <jan.kiszka@siemens.com>
+Acked-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
+---
+ hw/virtio-pci.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/hw/virtio-pci.c b/hw/virtio-pci.c
+index a0c2ca7..5b64356 100644
+--- a/hw/virtio-pci.c
++++ b/hw/virtio-pci.c
+@@ -629,7 +629,7 @@ static int virtio_pci_set_guest_notifiers(void *opaque, bool assign)
+ 
+     /* Must unset mask notifier while guest notifier
+      * is still assigned */
+-    if (!assign) {
++    if (kvm_irqchip_in_kernel() && !assign) {
+ 	    r = msix_unset_mask_notifier(&proxy->pci_dev);
+             assert(r >= 0);
+     }
+@@ -647,7 +647,7 @@ static int virtio_pci_set_guest_notifiers(void *opaque, bool assign)
+ 
+     /* Must set mask notifier after guest notifier
+      * has been assigned */
+-    if (assign) {
++    if (kvm_irqchip_in_kernel() && assign) {
+         r = msix_set_mask_notifier(&proxy->pci_dev,
+                                    virtio_pci_mask_notifier);
+         if (r < 0) {
+-- 
+1.7.10
+

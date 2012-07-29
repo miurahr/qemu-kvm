@@ -1,0 +1,4 @@
+usr/bin/qemu-img usr/bin/kvm-img
+usr/bin/qemu-nbd usr/bin/kvm-nbd
+usr/share/man/man1/qemu-img.1 usr/share/man/man1/kvm-img.1
+usr/share/man/man8/qemu-nbd.8 usr/share/man/man8/kvm-nbd.8

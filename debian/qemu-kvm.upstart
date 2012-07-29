@@ -1,0 +1,45 @@
+# qemu-kvm
+
+description "KVM"
+author "Dustin Kirkland <kirkland@canonical.com>"
+
+start on runlevel [2345]
+
+pre-start script
+	# Silently exit if the package isn't installed anymore
+	if [ ! -e /usr/bin/kvm ]; then
+		exit 0
+	fi
+	[ -r /etc/default/qemu-kvm ] && . /etc/default/qemu-kvm
+	# Load the appropriate module, respecting blacklists
+	if grep -qs "^flags.* vmx" /proc/cpuinfo; then
+		modprobe -b kvm_intel "$KVM_NESTED" || true
+	elif grep -qs "^flags.* svm" /proc/cpuinfo; then
+		modprobe -b kvm_amd || true
+	fi
+	# Enable KSM, respecting the default configuration file
+	if [ "$KSM_ENABLED" = "1" ]; then
+		[ -w /sys/kernel/mm/ksm/run ] && echo 1 > /sys/kernel/mm/ksm/run
+		if [ -w /sys/kernel/mm/ksm/sleep_millisecs ]; then
+			if [ -n "$SLEEP_MILLISECS" ]; then
+				echo "$SLEEP_MILLISECS" > /sys/kernel/mm/ksm/sleep_millisecs
+			fi
+		fi
+	else
+		[ -w /sys/kernel/mm/ksm/run ] && echo 0 > /sys/kernel/mm/ksm/run
+	fi
+	# If /etc/default/qemu-kvm says to, load vhost_net.  Default is not to.
+	if [ "$VHOST_NET_ENABLED" = "1" ]; then
+		modprobe -b vhost_net || true
+	fi
+end script
+
+post-stop script
+	# Unload the modules
+	if grep -qs "^flags.* vmx" /proc/cpuinfo; then
+		modprobe -r kvm_intel || true
+	elif grep -qs "^flags.* svm" /proc/cpuinfo; then
+		modprobe -r kvm_amd || true
+	fi
+	modprobe -r vhost_net || true
+end script

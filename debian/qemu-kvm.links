@@ -1,0 +1,4 @@
+usr/share/qemu usr/share/qemu-kvm
+usr/share/qemu usr/share/kvm
+usr/share/doc/qemu usr/share/doc/kvm
+usr/share/man/man1/qemu.1 usr/share/man/man1/kvm.1

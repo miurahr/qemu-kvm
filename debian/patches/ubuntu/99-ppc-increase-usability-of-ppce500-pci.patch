@@ -1,0 +1,119 @@
+diff --git a/hw/ppce500_mpc8544ds.c b/hw/ppce500_mpc8544ds.c
+index 225dcd3..956cbdd 100644
+--- a/hw/ppce500_mpc8544ds.c
++++ b/hw/ppce500_mpc8544ds.c
+@@ -338,8 +338,15 @@ static void mpc8544ds_init(ram_addr_t ram_size,
+ 
+     if (pci_bus) {
+         /* Register network interfaces. */
+-        for (i = 0; i < nb_nics; i++) {
+-            pci_nic_init_nofail(&nd_table[i], "virtio", NULL);
++        if (default_net) {
++            for (i = 0; i < nb_nics; i++) {
++                pci_nic_init_nofail(&nd_table[i], "virtio", NULL);
++            }
++        }
++
++        /* Register usb bus */
++        if (usb_enabled) {
++            pci_create_simple(pci_bus, -1, "piix4-usb-uhci");
+         }
+     }
+ 
+diff --git a/hw/ppce500_pci.c b/hw/ppce500_pci.c
+index 0f60b24..e7d06a3 100644
+--- a/hw/ppce500_pci.c
++++ b/hw/ppce500_pci.c
+@@ -227,15 +227,19 @@ static const MemoryRegionOps e500_pci_reg_ops = {
+     .endianness = DEVICE_BIG_ENDIAN,
+ };
+ 
++#define IRQ_BASE	0x11
++
+ static int mpc85xx_pci_map_irq(PCIDevice *pci_dev, int irq_num)
+ {
+     int devno = pci_dev->devfn >> 3, ret = 0;
+ 
+     switch (devno) {
+-        /* Two PCI slot */
+-        case 0x11:
+-        case 0x12:
+-            ret = (irq_num + devno - 0x10) % 4;
++        /* Faur PCI slot */
++	case IRQ_BASE:
++	case IRQ_BASE + 1:
++	case IRQ_BASE + 2:
++	case IRQ_BASE + 3:
++            ret = (irq_num + devno - (IRQ_BASE - 1)) & 0x3;
+             break;
+         default:
+             printf("Error:%s:unknown dev number\n", __func__);
+@@ -319,7 +323,7 @@ static int e500_pcihost_initfn(SysBusDevice *dev)
+ 
+     b = pci_register_bus(&s->pci_state.busdev.qdev, NULL, mpc85xx_pci_set_irq,
+                          mpc85xx_pci_map_irq, s->irq, address_space_mem,
+-                         address_space_io, PCI_DEVFN(0x11, 0), 4);
++                         address_space_io, PCI_DEVFN(IRQ_BASE, 0), 4);
+     s->pci_state.bus = b;
+ 
+     pci_create_simple(b, 0, "e500-host-bridge");
+diff --git a/pc-bios/mpc8544ds.dtb b/pc-bios/mpc8544ds.dtb
+index c6d3021..b7025cd 100644
+Binary files a/pc-bios/mpc8544ds.dtb and b/pc-bios/mpc8544ds.dtb differ
+diff --git a/pc-bios/mpc8544ds.dts b/pc-bios/mpc8544ds.dts
+index 7eb3160..cd0635d 100644
+--- a/pc-bios/mpc8544ds.dts
++++ b/pc-bios/mpc8544ds.dts
+@@ -71,11 +71,11 @@
+ 			device_type = "open-pic";
+ 		};
+ 
+-                global-utilities@e0000 {        //global utilities block
+-                        compatible = "fsl,mpc8544-guts";
+-                        reg = <0xe0000 0x1000>;
+-                        fsl,has-rstcr;
+-                };
++		global-utilities@e0000 {	//global utilities block
++			compatible = "fsl,mpc8544-guts";
++			reg = <0xe0000 0x1000>;
++			fsl,has-rstcr;
++		};
+ 	};
+ 
+ 	pci0: pci@e0008000 {
+@@ -84,19 +84,29 @@
+ 		device_type = "pci";
+ 		interrupt-map-mask = <0xf800 0x0 0x0 0x7>;
+ 		interrupt-map = <
+-
+-			/* IDSEL 0x11 J17 Slot 1 */
++			/* IDSEL 0x11 */
+ 			0x8800 0x0 0x0 0x1 &mpic 0x2 0x1
+ 			0x8800 0x0 0x0 0x2 &mpic 0x3 0x1
+ 			0x8800 0x0 0x0 0x3 &mpic 0x4 0x1
+ 			0x8800 0x0 0x0 0x4 &mpic 0x1 0x1
+ 
+-			/* IDSEL 0x12 J16 Slot 2 */
+-
++			/* IDSEL 0x12 */
+ 			0x9000 0x0 0x0 0x1 &mpic 0x3 0x1
+ 			0x9000 0x0 0x0 0x2 &mpic 0x4 0x1
+-			0x9000 0x0 0x0 0x3 &mpic 0x2 0x1
+-			0x9000 0x0 0x0 0x4 &mpic 0x1 0x1>;
++			0x9000 0x0 0x0 0x3 &mpic 0x1 0x1
++			0x9000 0x0 0x0 0x4 &mpic 0x2 0x1
++
++			/* IDSEL 0x13 */
++			0x9800 0x0 0x0 0x1 &mpic 0x4 0x1
++			0x9800 0x0 0x0 0x2 &mpic 0x1 0x1
++			0x9800 0x0 0x0 0x3 &mpic 0x2 0x1
++			0x9800 0x0 0x0 0x4 &mpic 0x3 0x1
++
++			/* IDSEL 0x14 */
++			0xa000 0x0 0x0 0x1 &mpic 0x1 0x1
++			0xa000 0x0 0x0 0x2 &mpic 0x2 0x1
++			0xa000 0x0 0x0 0x3 &mpic 0x3 0x1
++			0xa000 0x0 0x0 0x4 &mpic 0x4 0x1>;
+ 
+ 		interrupt-parent = <&mpic>;
+ 		interrupts = <24 2>;

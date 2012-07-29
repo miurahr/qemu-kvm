@@ -1,0 +1,19 @@
+Description: kvm: Enable use of kvm_irqchip_in_kernel in hwlib code
+ Provide a dummy kvm_kernel_irqchip so that kvm_irqchip_in_kernel can be
+ used by code that is not under CONFIG_KVM protection.
+ This is needed for --disable-kvm (arm and powerpc) builds to succeed.
+Author: Signed-off-by: Jan Kiszka <jan.kiszka@siemens.com>
+Origin: upstream
+
+Index: qemu-kvm-1.1~rc+dfsg/kvm-stub.c
+===================================================================
+--- qemu-kvm-1.1~rc+dfsg.orig/kvm-stub.c	2012-05-31 20:19:22.000000000 -0500
++++ qemu-kvm-1.1~rc+dfsg/kvm-stub.c	2012-06-20 10:25:41.451219497 -0500
+@@ -17,6 +17,7 @@
+ #include "kvm.h"
+ 
+ KVMState *kvm_state;
++bool kvm_kernel_irqchip;
+ 
+ int kvm_init_vcpu(CPUArchState *env)
+ {

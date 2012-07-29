@@ -1,0 +1,13 @@
+Index: qemu-kvm-1.1~rc+dfsg/vl.c
+===================================================================
+--- qemu-kvm-1.1~rc+dfsg.orig/vl.c	2012-06-12 18:30:12.000000000 +0000
++++ qemu-kvm-1.1~rc+dfsg/vl.c	2012-06-12 19:30:59.180250037 +0000
+@@ -171,7 +171,7 @@
+ //#define DEBUG_NET
+ //#define DEBUG_SLIRP
+ 
+-#define DEFAULT_RAM_SIZE 128
++#define DEFAULT_RAM_SIZE 384
+ 
+ #define MAX_VIRTIO_CONSOLES 1
+ 

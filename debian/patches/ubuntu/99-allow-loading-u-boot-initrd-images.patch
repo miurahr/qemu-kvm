@@ -1,0 +1,105 @@
+From 62f69ccf5aeb9c556e99d21ba9745fe9d5257005 Mon Sep 17 00:00:00 2001
+From: Ben Collins <ben.c@servergy.com>
+Date: Wed, 6 Jun 2012 15:26:26 -0400
+Subject: [PATCH] SGY: Allow loading U-Boot initrd images
+
+The hooks were already there for the kernel, so enabled it for initrd's
+too. The caveat is that we don't decompress initrd's, since the kernel can
+do this itself (and actually gets confused if it encounters an uncompressed
+image).
+
+Signed-off-by: Ben Collins <ben.c@servergy.com>
+---
+ hw/loader.c |   34 +++++++++++++++++++++++++---------
+ 1 file changed, 25 insertions(+), 9 deletions(-)
+
+diff --git a/hw/loader.c b/hw/loader.c
+index 7d64113..7c2635d 100644
+--- a/hw/loader.c
++++ b/hw/loader.c
+@@ -105,8 +105,13 @@ ssize_t read_targphys(const char *name,
+ int load_image_targphys(const char *filename,
+                         target_phys_addr_t addr, uint64_t max_sz)
+ {
++    target_phys_addr_t ep;
+     int size;
+ 
++    size = load_uimage(filename, &ep, &addr, NULL);
++    if (size > 0)
++        return size;
++
+     size = get_image_size(filename);
+     if (size > max_sz) {
+         return -1;
+@@ -435,12 +440,13 @@ static ssize_t gunzip(void *dst, size_t dstlen, uint8_t *src,
+ 
+ /* Load a U-Boot image.  */
+ int load_uimage(const char *filename, target_phys_addr_t *ep,
+-                target_phys_addr_t *loadaddr, int *is_linux)
++                target_phys_addr_t *loadaddr_ptr, int *is_linux)
+ {
+     int fd;
+     int size;
+     uboot_image_header_t h;
+     uboot_image_header_t *hdr = &h;
++    target_phys_addr_t loadaddr;
+     uint8_t *data = NULL;
+     int ret = -1;
+ 
+@@ -458,8 +464,9 @@ int load_uimage(const char *filename, target_phys_addr_t *ep,
+         goto out;
+ 
+     /* TODO: Implement other image types.  */
+-    if (hdr->ih_type != IH_TYPE_KERNEL) {
+-        fprintf(stderr, "Can only load u-boot image type \"kernel\"\n");
++    if (hdr->ih_type != IH_TYPE_KERNEL &&
++        hdr->ih_type != IH_TYPE_RAMDISK) {
++        fprintf(stderr, "Can only load u-boot image type \"kernel\" or \"ramdisk\"\n");
+         goto out;
+     }
+ 
+@@ -482,7 +489,18 @@ int load_uimage(const char *filename, target_phys_addr_t *ep,
+             *is_linux = 0;
+     }
+ 
+-    *ep = hdr->ih_ep;
++    loadaddr = hdr->ih_load;
++
++    if (loadaddr_ptr) {
++        if (hdr->ih_type == IH_TYPE_RAMDISK) {
++            loadaddr = *loadaddr_ptr;
++        } else {
++            *loadaddr_ptr = loadaddr;
++        }
++    }
++
++    *ep = loadaddr + hdr->ih_ep - hdr->ih_load;
++
+     data = g_malloc(hdr->ih_size);
+ 
+     if (read(fd, data, hdr->ih_size) != hdr->ih_size) {
+@@ -490,7 +508,8 @@ int load_uimage(const char *filename, target_phys_addr_t *ep,
+         goto out;
+     }
+ 
+-    if (hdr->ih_comp == IH_COMP_GZIP) {
++    /* We don't decompress initrd's */
++    if (hdr->ih_type == IH_TYPE_KERNEL && hdr->ih_comp == IH_COMP_GZIP) {
+         uint8_t *compressed_data;
+         size_t max_bytes;
+         ssize_t bytes;
+@@ -508,10 +527,7 @@ int load_uimage(const char *filename, target_phys_addr_t *ep,
+         hdr->ih_size = bytes;
+     }
+ 
+-    rom_add_blob_fixed(filename, data, hdr->ih_size, hdr->ih_load);
+-
+-    if (loadaddr)
+-        *loadaddr = hdr->ih_load;
++    rom_add_blob_fixed(filename, data, hdr->ih_size, loadaddr);
+ 
+     ret = hdr->ih_size;
+ 
+-- 
+1.7.9.5
+

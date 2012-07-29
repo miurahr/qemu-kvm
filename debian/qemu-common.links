@@ -1,0 +1,2 @@
+usr/bin/qemu-ifdown etc/qemu-ifdown
+usr/bin/qemu-ifup etc/qemu-ifup

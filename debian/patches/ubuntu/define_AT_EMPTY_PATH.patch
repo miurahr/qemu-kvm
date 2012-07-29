@@ -1,0 +1,28 @@
+Description: make sure AT_EMPTHY_PATH is defined
+ It was being defined inside an ifdef but used outside of it.  The define
+ could also come from linux/fcntl.h.
+Author: Serge Hallyn <serge.hallyn@ubuntu.com>
+Forwarded: no
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/qemu-kvm/+bug/930181
+
+Index: qemu-kvm-1.0+dfsg/hw/9pfs/virtio-9p-handle.c
+===================================================================
+--- qemu-kvm-1.0+dfsg.orig/hw/9pfs/virtio-9p-handle.c	2012-05-29 14:06:21.000000000 -0500
++++ qemu-kvm-1.0+dfsg/hw/9pfs/virtio-9p-handle.c	2012-05-29 16:09:16.087736838 -0500
+@@ -45,6 +45,16 @@
+     int handle_bytes;
+ };
+ 
++#ifndef AT_REMOVEDIR
++#define AT_REMOVEDIR    0x200
++#endif
++#ifndef AT_EMPTY_PATH
++#define AT_EMPTY_PATH   0x1000  /* Allow empty relative pathname */
++#endif
++#ifndef O_PATH
++#define O_PATH    010000000
++#endif
++
+ static inline int name_to_handle(int dirfd, const char *name,
+                                  struct file_handle *fh, int *mnt_id, int flags)
+ {

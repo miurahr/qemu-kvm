@@ -1,0 +1,15 @@
+Description: U-Boot images only allow for 8 Meg sizes, increase it
+Author: Ben Collins <bcollins@ubuntu.com>
+
+--- qemu-kvm-1.1~rc+dfsg.orig/hw/loader.c
++++ qemu-kvm-1.1~rc+dfsg/hw/loader.c
+@@ -379,7 +379,8 @@ static void zfree(void *x, void *addr)
+ 
+ /* This is the maximum in uboot, so if a uImage overflows this, it would
+  * overflow on real hardware too. */
+-#define UBOOT_MAX_GUNZIP_BYTES 0x800000
++/* This is way too vague. Plus, why can't we be better than U-Boot? -- BenC */
++#define UBOOT_MAX_GUNZIP_BYTES 0x1000000
+ 
+ static ssize_t gunzip(void *dst, size_t dstlen, uint8_t *src,
+                       size_t srclen)

@@ -1,0 +1,36 @@
+From 398b87f4ef3426569bdda2da2c9c2b89f4ba906f Mon Sep 17 00:00:00 2001
+From: Jan Kiszka <jan.kiszka@siemens.com>
+Date: Mon, 2 Jul 2012 09:34:46 +0200
+Subject: [PATCH 1/2] qemu-kvm: Add missing default machine options
+
+qemu-kvm-specific machine defaults were missing for pc-0.15 and pc-1.0.
+
+Signed-off-by: Jan Kiszka <jan.kiszka@siemens.com>
+Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
+---
+ hw/pc_piix.c |    2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/hw/pc_piix.c b/hw/pc_piix.c
+index c3fb74e..4e8a280 100644
+--- a/hw/pc_piix.c
++++ b/hw/pc_piix.c
+@@ -393,6 +393,7 @@ static QEMUMachine pc_machine_v1_0 = {
+     .desc = "Standard PC",
+     .init = pc_init_pci,
+     .max_cpus = 255,
++    .default_machine_opts = "accel=kvm,kernel_irqchip=on",
+     .compat_props = (GlobalProperty[]) {
+         PC_COMPAT_1_0,
+         { /* end of list */ }
+@@ -407,6 +408,7 @@ static QEMUMachine pc_machine_v0_15 = {
+     .desc = "Standard PC",
+     .init = pc_init_pci,
+     .max_cpus = 255,
++    .default_machine_opts = "accel=kvm,kernel_irqchip=on",
+     .compat_props = (GlobalProperty[]) {
+         PC_COMPAT_0_15,
+         { /* end of list */ }
+-- 
+1.7.10
+
