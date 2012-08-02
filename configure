@@ -1905,7 +1905,7 @@ for drv in $audio_drv_list; do
     case $drv in
     alsa)
     audio_drv_probe $drv alsa/asoundlib.h -lasound \
-        "snd_pcm_t **handle; return snd_pcm_close(*handle);"
+        'snd_pcm_t *handle;snd_pcm_open(&handle,"/dev/snd",SND_PCM_STREAM_PLAYBACK,0); return snd_pcm_close(handle);'
     libs_softmmu="-lasound $libs_softmmu"
     ;;
 
@@ -2099,7 +2099,7 @@ if test "$cap" != "no" ; then
   cat > $TMPC <<EOF
 #include <stdio.h>
 #include <sys/capability.h>
-int main(void) { cap_t caps; caps = cap_init(); }
+int main(void) { cap_t caps; caps = cap_init(); if(caps) return 1; return 0;}
 EOF
   if compile_prog "" "-lcap" ; then
     cap=yes
