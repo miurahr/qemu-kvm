@@ -1222,7 +1222,7 @@ static inline void tb_invalidate_phys_page_fast(tb_page_addr_t start, int len)
     }
 }
 
-#if !defined(CONFIG_SOFTMMU)
+#if !defined(CONFIG_SOFTMMU) && defined(CONFIG_USER_ONLY)
 static void tb_invalidate_phys_page(tb_page_addr_t addr,
                                     uintptr_t pc, void *puc)
 {
