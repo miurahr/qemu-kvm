@@ -1984,8 +1984,8 @@ static int serial_parse(const char *devname)
     snprintf(label, sizeof(label), "serial%d", index);
     serial_hds[index] = qemu_chr_new(label, devname, NULL);
     if (!serial_hds[index]) {
-        fprintf(stderr, "qemu: could not open serial device '%s': %s\n",
-                devname, strerror(errno));
+        fprintf(stderr, "qemu: could not connect serial device"
+                " to character backend '%s'\n", devname);
         return -1;
     }
     index++;
@@ -2006,8 +2006,8 @@ static int parallel_parse(const char *devname)
     snprintf(label, sizeof(label), "parallel%d", index);
     parallel_hds[index] = qemu_chr_new(label, devname, NULL);
     if (!parallel_hds[index]) {
-        fprintf(stderr, "qemu: could not open parallel device '%s': %s\n",
-                devname, strerror(errno));
+        fprintf(stderr, "qemu: could not connect parallel device"
+                " to character backend '%s'\n", devname);
         return -1;
     }
     index++;
@@ -2041,8 +2041,8 @@ static int virtcon_parse(const char *devname)
     snprintf(label, sizeof(label), "virtcon%d", index);
     virtcon_hds[index] = qemu_chr_new(label, devname, NULL);
     if (!virtcon_hds[index]) {
-        fprintf(stderr, "qemu: could not open virtio console '%s': %s\n",
-                devname, strerror(errno));
+        fprintf(stderr, "qemu: could not connect virtio console"
+                " to character backend '%s'\n", devname);
         return -1;
     }
     qemu_opt_set(dev_opts, "chardev", label);
@@ -3472,8 +3472,7 @@ int main(int argc, char **argv, char **envp)
     default_drive(default_sdcard, snapshot, machine->use_scsi,
                   IF_SD, 0, SD_OPTS);
 
-    register_savevm_live(NULL, "ram", 0, 4, NULL, ram_save_live, NULL,
-                         ram_load, NULL);
+    register_savevm_live(NULL, "ram", 0, 4, &savevm_ram_handlers, NULL);
 
     if (nb_numa_nodes > 0) {
         int i;
