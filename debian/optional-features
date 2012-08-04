@@ -19,6 +19,7 @@
 #--enable-kvm
 # ability to assign physical device to a guest
 #--enable-kvm-device-assignment
+--enable-tcg-interpreter
 # iSCSI support using libiscsi
 #--enable-libiscsi
 --disable-libiscsi
@@ -48,7 +49,7 @@
 # vnc display support with all the features
 --enable-vnc
 --enable-vnc-jpeg
---enable-vnc-png
+#--enable-vnc-png
 --enable-vnc-sasl
 --enable-vnc-tls
 # xfsctl, only needs headers.  Ability to handle block DISCARD requests

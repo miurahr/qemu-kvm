@@ -5,16 +5,14 @@ Author: Serge Hallyn <serge.hallyn@ubuntu.com>
 Forwarded: yes
 Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/libvirt/+bug/878422
 
-Index: qemu-kvm-1.1~rc+dfsg/hw/acpi_piix4.c
-===================================================================
---- qemu-kvm-1.1~rc+dfsg.orig/hw/acpi_piix4.c	2012-06-01 01:19:22.000000000 +0000
-+++ qemu-kvm-1.1~rc+dfsg/hw/acpi_piix4.c	2012-06-12 19:39:06.980254166 +0000
-@@ -613,16 +613,23 @@
+--- a/hw/acpi_piix4.c
++++ b/hw/acpi_piix4.c
+@@ -631,16 +631,23 @@
  
  void qemu_system_cpu_hot_add(int cpu, int state)
  {
 +#if 0
-     CPUArchState *env;
+     X86CPU *env;
 +#endif
      PIIX4PMState *s = global_piix4_pm_state;
  
@@ -28,7 +26,7 @@ Index: qemu-kvm-1.1~rc+dfsg/hw/acpi_piix4.c
              fprintf(stderr, "cpu %d creation failed\n", cpu);
              return;
          }
-         env->cpuid_apic_id = cpu;
+         env->env.cpuid_apic_id = cpu;
 +#endif
      }
  

@@ -16,20 +16,6 @@ alternative is to use ahci (sata).
 
 It will definitely go away after wheezy.
 
-diff --git a/Makefile.target b/Makefile.target
-index eda8637..4e4bd23 100644
---- a/Makefile.target
-+++ b/Makefile.target
-@@ -226,6 +226,7 @@ obj-i386-y += apic_common.o apic.o kvmvapic.o
- obj-i386-y += sga.o ioapic_common.o ioapic.o piix_pci.o
- obj-i386-y += vmport.o
- obj-i386-y += pci-hotplug.o smbios.o wdt_ib700.o
-+obj-i386-y += extboot.o
- obj-i386-y += debugcon.o multiboot.o
- obj-i386-y += pc_piix.o
- obj-i386-y += pc_sysfw.o
-diff --git a/blockdev.c b/blockdev.c
-index 0d20460..63c384e 100644
 --- a/blockdev.c
 +++ b/blockdev.c
 @@ -20,6 +20,8 @@
@@ -41,7 +27,7 @@ index 0d20460..63c384e 100644
  static QTAILQ_HEAD(drivelist, DriveInfo) drives = QTAILQ_HEAD_INITIALIZER(drives);
  
  static const char *const if_name[IF_COUNT] = {
-@@ -293,6 +295,7 @@ DriveInfo *drive_init(QemuOpts *opts, int default_to_scsi)
+@@ -292,6 +294,7 @@
      int on_read_error, on_write_error;
      const char *devaddr;
      DriveInfo *dinfo;
@@ -49,7 +35,7 @@ index 0d20460..63c384e 100644
      BlockIOLimit io_limits;
      int snapshot = 0;
      bool copy_on_read;
-@@ -435,11 +438,17 @@ DriveInfo *drive_init(QemuOpts *opts, int default_to_scsi)
+@@ -432,11 +435,17 @@
      }
  
      if (qemu_opt_get(opts, "boot") != NULL) {
@@ -69,8 +55,8 @@ index 0d20460..63c384e 100644
      on_write_error = BLOCK_ERR_STOP_ENOSPC;
      if ((buf = qemu_opt_get(opts, "werror")) != NULL) {
          if (type != IF_IDE && type != IF_SCSI && type != IF_VIRTIO && type != IF_NONE) {
-@@ -546,6 +555,10 @@ DriveInfo *drive_init(QemuOpts *opts, int default_to_scsi)
-     }
+@@ -545,6 +554,10 @@
+     dinfo->serial = serial;
      QTAILQ_INSERT_TAIL(&drives, dinfo, next);
  
 +    if (is_extboot) {
@@ -80,11 +66,9 @@ index 0d20460..63c384e 100644
      bdrv_set_on_error(dinfo->bdrv, on_read_error, on_write_error);
  
      /* disk I/O throttling */
-diff --git a/blockdev.h b/blockdev.h
-index 260e16b..0b593f4 100644
 --- a/blockdev.h
 +++ b/blockdev.h
-@@ -54,6 +54,8 @@ QemuOpts *drive_add(BlockInterfaceType type, int index, const char *file,
+@@ -53,6 +53,8 @@
                      const char *optstr);
  DriveInfo *drive_init(QemuOpts *arg, int default_to_scsi);
  
@@ -93,9 +77,6 @@ index 260e16b..0b593f4 100644
  /* device-hotplug */
  
  DriveInfo *add_init_drive(const char *opts);
-diff --git a/hw/extboot.c b/hw/extboot.c
-new file mode 100644
-index 0000000..d517834
 --- /dev/null
 +++ b/hw/extboot.c
 @@ -0,0 +1,123 @@
@@ -222,11 +203,9 @@ index 0000000..d517834
 +{
 +    register_ioport_write(0x405, 1, 2, extboot_write_cmd, bs);
 +}
-diff --git a/hw/pc.c b/hw/pc.c
-index dc31933..b4111d8 100644
 --- a/hw/pc.c
 +++ b/hw/pc.c
-@@ -1021,6 +1021,12 @@ void pc_memory_init(MemoryRegion *system_memory,
+@@ -997,6 +997,12 @@
      /* Initialize PC system firmware */
      pc_system_firmware_init(rom_memory);
  
@@ -239,7 +218,7 @@ index dc31933..b4111d8 100644
      option_rom_mr = g_malloc(sizeof(*option_rom_mr));
      memory_region_init_ram(option_rom_mr, "pc.rom", PC_ROM_SIZE);
      vmstate_register_ram_global(option_rom_mr);
-@@ -1190,4 +1196,16 @@ void pc_pci_device_init(PCIBus *pci_bus)
+@@ -1167,4 +1173,16 @@
      for (bus = 0; bus <= max_bus; bus++) {
          pci_create_simple(pci_bus, -1, "lsi53c895a");
      }
@@ -256,11 +235,9 @@ index dc31933..b4111d8 100644
 +        extboot_init(info->bdrv);
 +    }
  }
-diff --git a/hw/pc.h b/hw/pc.h
-index 8ccf202..d8744ef 100644
 --- a/hw/pc.h
 +++ b/hw/pc.h
-@@ -225,6 +225,10 @@ static inline bool isa_ne2000_init(ISABus *bus, int base, int irq, NICInfo *nd)
+@@ -225,6 +225,10 @@
  /* pc_sysfw.c */
  void pc_system_firmware_init(MemoryRegion *rom_memory);
  
@@ -271,11 +248,9 @@ index 8ccf202..d8744ef 100644
  /* e820 types */
  #define E820_RAM        1
  #define E820_RESERVED   2
-diff --git a/pc-bios/optionrom/Makefile b/pc-bios/optionrom/Makefile
-index 57d8bd0..ef2e9de 100644
 --- a/pc-bios/optionrom/Makefile
 +++ b/pc-bios/optionrom/Makefile
-@@ -14,7 +14,7 @@ CFLAGS += -I$(SRC_PATH)
+@@ -14,7 +14,7 @@
  CFLAGS += $(call cc-option, $(CFLAGS), -fno-stack-protector)
  QEMU_CFLAGS = $(CFLAGS)
  
@@ -284,9 +259,6 @@ index 57d8bd0..ef2e9de 100644
  
  # suppress auto-removal of intermediate files
  .SECONDARY:
-diff --git a/pc-bios/optionrom/extboot.S b/pc-bios/optionrom/extboot.S
-new file mode 100644
-index 0000000..db6c2b6
 --- /dev/null
 +++ b/pc-bios/optionrom/extboot.S
 @@ -0,0 +1,691 @@
@@ -981,3 +953,13 @@ index 0000000..db6c2b6
 +
 +.align 512, 0
 +_end:
+--- a/hw/i386/Makefile.objs
++++ b/hw/i386/Makefile.objs
+@@ -3,6 +3,7 @@
+ obj-y += sga.o ioapic_common.o ioapic.o piix_pci.o
+ obj-y += vmport.o
+ obj-y += pci-hotplug.o smbios.o wdt_ib700.o
++obj-y += extboot.o
+ obj-y += debugcon.o multiboot.o
+ obj-y += pc_piix.o
+ obj-y += pc_sysfw.o

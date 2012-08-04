@@ -32,6 +32,7 @@ vgabios := /usr/share/vgabios
 DEB_BUILD_ARCH     ?= $(shell dpkg-architecture -qDEB_BUILD_ARCH)
 DEB_HOST_ARCH       ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 DEB_HOST_ARCH_CPU   ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_CPU)
+DEB_BUILD_MULTIARCH   ?= $(shell dpkg-architecture -qDEB_BUILD_MULTIARCH)
 BASE_ARCH := $(DEB_BUILD_ARCH)
 DEB_VERSION := $(shell sed -n -e 's/^[^(]* (\([^)]*\)) .*/\1/p' -e1q debian/changelog)
 
@@ -60,6 +61,7 @@ endif
 CFLAGS = $(shell dpkg-buildflags --get CFLAGS)
 CFLAGS += $(shell dpkg-buildflags --get CPPFLAGS)
 CFLAGS += -Wall
+CFLAGS += -I/usr/include/${DEB_BUILD_MULTIARCH}
 LDFLAGS = $(shell dpkg-buildflags --get LDFLAGS)
 
 ifeq ($(DEB_HOST_ARCH_CPU),arm)
